@@ -3,28 +3,48 @@
             [lazybot.utilities :refer [trim-string]]
             [cheshire.core :refer [parse-string]] 
             [clojure.string :as s]
-            [clj-http.client :as http])
-  (:import org.apache.commons.lang.StringEscapeUtils
+            [clj-http.client :as http]
+            [lazybot.plugins.title :as t]
+            [clojure.java.io :refer [reader]]
+            [clojail.core :refer [thunk-timeout]])
+  (:import java.util.concurrent.TimeoutException
+  	  org.apache.commons.lang.StringEscapeUtils
            java.net.URLDecoder))
-
-(defn google [service term]
-  "Services: \"web\", \"images\""
-  (-> (http/get (str "http://ajax.googleapis.com/ajax/services/search/"
-                     service)
-                {:query-params {"v"  "1.0"
-                                "rsz" 8 ; 8 results
-                                "q"   term}})
-      :body
-      parse-string))
 
 (defn search-string
   "From an argument list, builds a search string."
   [args]
   (->> args
-       (s/join " ")
+       (s/join "%20")
        s/trim))
 
-(defn handle-search [com-m]
+(defn handle-search [{:keys [com nick bot user channel message] :as com-m}]
+	(let [q (search-string (:args com-m))]
+                  (if-not (seq q)
+                    (str "No search terms!")
+                    (if (not (contains? (get-in @bot [:config (:server @com) :title :blacklist])
+                          channel))
+                            (let [link 
+                            	    (with-open [readerurl (clojure.java.io/reader (str "https://duckduckgo.com/?q=\\" q))]
+                            	    	    (java.net.URLDecoder/decode (second
+                            	    	    		    (re-find #"uddg=(.+?)'" (apply str (line-seq readerurl))))))]
+      (try
+       (thunk-timeout #(let [url (t/add-url-prefix link)
+                             page (t/slurp-or-default url)
+                             match (second page)]
+                         (if (and (seq page) (seq match) (not (t/url-check com bot url)))
+                           (send-message com-m
+                                              (apply str (take 200 (str link " \""
+                                                   (s/triml
+                                                    (StringEscapeUtils/unescapeHtml
+                                                     (t/collapse-whitespace match)))
+                                                   "\""))))
+                           ))
+                      20 :sec)
+       (catch TimeoutException _
+           (println "It's taking too long to do the search. I'm giving up."))))))))
+
+#_(defn handle-search-old [com-m]
   (send-message com-m
                 (let [q (search-string (:args com-m))]
                   (if-not (seq q)
@@ -43,40 +63,22 @@
                              "] "
                              (URLDecoder/decode url "UTF-8"))))))))
 
-(defn handle-image-search
-  "Finds a random google image for a string, and responds with the URI."
-  [com-m]
-  (send-message com-m
-                (let [q (search-string (:args com-m))]
-                  (if-not (seq q)
-                    (str "No search terms!")
-                    (-> (google "images" q)
-                        (get "responseData")
-                        (get "results")
-                        rand-nth
-                        (get "url")
-                        (URLDecoder/decode "UTF-8"))))))
-
 (defplugin
   (:cmd
    "Searches google for whatever you ask it to, and displays the first result
-   and the estimated number of results found."
-   #{"google"}
+   and its title."
+   #{"google" "g"}
    #'handle-search)
 
   (:cmd
-    "Searches google for a string, and returns a random image from the results."
-    #{"gis"}
-    #'handle-image-search)
-
-  (:cmd
    "Searches wikipedia via google."
-   #{"wiki"}
+   #{"wiki" "w"}
    (fn [args]
      (handle-search (assoc args :args (conj (:args args) "site:en.wikipedia.org")))))
 
   (:cmd
-   "Searches encyclopediadramtica via google."
-   #{"ed"}
+   "Searches YouTube via google."
+   #{"youtube" "yt"}
    (fn [args]
-     (handle-search (assoc args :args (conj (:args args) "site:encyclopediadramatica.com"))))))
+     (handle-search (assoc args :args (conj (:args args) "site:youtube.com"))))))
+
