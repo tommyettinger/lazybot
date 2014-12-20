@@ -24,22 +24,23 @@
                     (str "No search terms!")
                     (if (not (contains? (get-in @bot [:config (:server @com) :title :blacklist])
                           channel))
-                            (let [link 
+                            (let [full-html 
                             	    (with-open [readerurl (clojure.java.io/reader (str "https://duckduckgo.com/?q=\\" q))]
-                            	    	    (java.net.URLDecoder/decode (second
-                            	    	    		    (re-find #"uddg=(.+?)'" (apply str (line-seq readerurl))))))]
+                            	    	    (s/join " " (line-seq readerurl)))
+                            	  link (java.net.URLDecoder/decode (second
+                            	    	    		    (re-find #"uddg=(.+?)[\"']" full-html)))]
       (try
        (thunk-timeout #(let [url (t/add-url-prefix link)
                              page (t/slurp-or-default url)
                              match (second page)]
-                         (if (and (seq page) (seq match) (not (t/url-check com bot url)))
+                         (if (and (seq page) (seq match)) ; (not (t/url-check com bot url))
                            (send-message com-m
-                                              (apply str (take 200 (str link " \""
+                                              (apply str (take 200 (str url " \""
                                                    (s/triml
                                                     (StringEscapeUtils/unescapeHtml
                                                      (t/collapse-whitespace match)))
                                                    "\""))))
-                           ))
+                           (do (println (apply str (take 400 full-html))) (println) (println link))))
                       20 :sec)
        (catch TimeoutException _
            (println "It's taking too long to do the search. I'm giving up."))))))))

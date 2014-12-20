@@ -16,8 +16,14 @@
   (->> s (.split #"\s+") (interpose " ") (apply str)))
 
 (defn add-url-prefix [url]
-  (if-not (.startsWith url "http")
-    (str "http://" url)
+  (cond
+    (not (.startsWith url "http"))
+    (str "https://" url)
+    
+    (.startsWith url "http:")
+    (s/replace url #"http:" "https:")
+    
+    :else
     url))
 
 (defn slurp-or-default [url]
