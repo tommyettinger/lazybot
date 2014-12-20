@@ -20,7 +20,7 @@
     (not (.startsWith url "http"))
     (str "https://" url)
     
-    (.startsWith url "http:")
+    (re-find #"http://(www\.)?youtu" url)
     (s/replace url #"http:" "https:")
     
     :else
