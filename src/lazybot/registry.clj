@@ -74,7 +74,7 @@
 (defn ignore-message? [{:keys [nick bot com]}]
   (-> bot
       (get-in [:config (:server com) :user-blacklist])
-      (contains? (.toLowerCase nick))))
+      (#(some (fn [re] (re-find (re-pattern (str "(?i)" re)) nick)) %))))
 
 (defn try-handle
   "attempt to handle input from an IRC channel"
