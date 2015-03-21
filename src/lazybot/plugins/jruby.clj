@@ -22,6 +22,6 @@
 (registry/defplugin
   (:cmd
    "Evaluate JRuby code."
-   #{"jr"}
+   #{"jr" "ruby" "calc"}
    (fn [{:keys [raw-args] :as com-m}]
      (registry/send-message com-m (eval-jruby raw-args)))))

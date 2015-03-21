@@ -4,6 +4,7 @@ pom.xml
 lib
 classes
 logs
+*#*#
 *~
 logs
 *log

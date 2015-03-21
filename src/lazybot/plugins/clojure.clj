@@ -33,19 +33,22 @@
       (str (and macro "Macro ") arglists "; " docs))))
 
 (def tester
-  (conj testers/secure-tester
+  (conj (conj testers/secure-tester
         (testers/blanket "somnium"
-                         "lazybot"
-                         "irclj"
-                         "findfn")))
+                 "lazybot"
+                 "irclj"
+                 "findfn"
+                 ))
+          (testers/blacklist-packages ["javax.swing"])))
 
 (def sb
   (clojail/sandbox tester
-                   :transform pr-str
-                   :init '(defmacro doc [s]
-                            (if (special-symbol? s)
-                              (lazybot.plugins.clojure/doc* s)
-                              `(doc* (var ~s))))))
+           :transform pr-str
+           :init '(do (require ['clojure.math.numeric-tower :refer :all])
+                  (defmacro doc [s]
+                    (if (special-symbol? s)
+                      (lazybot.plugins.clojure/doc* s)
+                      `(doc* (var ~s)))))))
 
 (def cap 300)
 

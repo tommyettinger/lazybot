@@ -8,7 +8,7 @@
 
 (defn check-login [user mask pass server bot]
   (when-let [userconf (get-in @bot [:config server :users user])]
-    (when (or (= mask (:host userconf)) (= pass (:pass userconf))) 
+    (when (or (re-find (:host userconf) mask) (= pass (:pass userconf))) 
       (dosync (alter bot assoc-in [:logged-in user] (userconf :privs))))))
 
 (defn logged-in? [bot user]

@@ -175,7 +175,7 @@ Example Usage: sub /a/A/e/E/i/I/o/O/u/U/"
   (:cmd
    "Multiple find and replace. Usage: subme [slash-separated list of /search/replace/search/replace/ strings]
 Will substitute the last the last thing said in the channel by you, even if other people spoke in-between.
-Example Usage: subme /a/A/e/E/i/I/o/O/u/U/"
+Example Usage: sub /a/A/e/E/i/I/o/O/u/U/"
    #{"subme"}
    (fn [com-m]
      (substitute-me com-m false)))
