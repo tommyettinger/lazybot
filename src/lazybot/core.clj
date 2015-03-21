@@ -99,8 +99,10 @@
   (alter-var-root #'lazybot.core/sroutes (constantly (wrap-params (apply routes rs)))))
 
 (defn start-server [port]
-  (defonce server (run-jetty #'lazybot.core/sroutes
-                             {:port port :join? false})))
+  (defonce server 
+  		  (run-jetty #'lazybot.core/sroutes
+                             {:port port :join? false})
+          ))
 
 (defn reload-all
   "A clever function to reload everything when running lazybot from SLIME.
