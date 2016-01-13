@@ -69,7 +69,7 @@
 (defplugin
   (:hook
    :privmsg
-   (fn [{:keys [com bot nick channel message] :as com-m}]
+   (fn [{:keys [network bot nick channel message] :as com-m}]
      (let [info (:config @bot)
            get-links (fn [s]
                        (->> s
